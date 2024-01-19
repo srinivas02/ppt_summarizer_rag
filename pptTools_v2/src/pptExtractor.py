@@ -13,36 +13,26 @@ from pptx import Presentation
 from haystack.schema import Document as hay_doc
 from langchain.schema.document import Document as lc_doc
 from pptTools.common.utils import chartTypeGlossary
-
+# from pptTools_v2.src.dbConfig import dbHandler
 
 class PPTXExtractor:
-    """
-    Extracts content from a PowerPoint (PPTX) file, including titles, text, charts, tables, and images.
-    """
 
-    def __init__(self, filepath):
-        """
-        Initializes the PPTXExtractorFixed instance with the given file path.
-
-        Parameters:
-        - filepath (str): The path to the PowerPoint file.
-        """
+    def __init__(self):
+        self.filepath = None
+        self.presentation = None
+        self.metadata = None
+        
+    def set_filepath(self, filepath):
         self.filepath = filepath
         self.presentation = Presentation(self.filepath)
         self.metadata = {
                 "source": self.filepath,
                 'file_directory': os.path.dirname(self.filepath),
                 'file_name': os.path.basename(self.filepath),
-                'last_modified': os.path.getmtime(self.filepath)
+                'modified_date': os.path.getmtime(self.filepath),
+                'file_size': os.path.getsize(self.filepath)
             }
-
-    def get_slide_content(self, return_langchain_documents=True):
-        """
-        Extracts content from each slide in the presentation.
-
-        Returns:
-        - list: List of dictionaries containing slide content.
-        """
+    def get_content(self, return_langchain_documents=True):
         slide_contents = []
         for slide_number, slide in tqdm(enumerate(self.presentation.slides, start=1)):
             slide_content = {
@@ -73,40 +63,13 @@ class PPTXExtractor:
         return slide_contents
 
     def extract_layout(self, slide):
-        """
-        Extracts the layout details from the given slide.
-
-        Parameters:
-        - slide: PowerPoint slide object.
-
-        Returns:
-        - str: layout name.
-        """
         return slide.slide_layout.name
 
     def extract_title(self, slide):
-        """
-        Extracts the title from the given slide.
-
-        Parameters:
-        - slide: PowerPoint slide object.
-
-        Returns:
-        - str: Title text or 'No Title' if no title is found.
-        """
         title = slide.shapes.title
         return title.text if title else 'No Title'
 
     def extract_text(self, slide):
-        """
-        Extracts text content from the given slide.
-
-        Parameters:
-        - slide: PowerPoint slide object.
-
-        Returns:
-        - str: Concatenated text content.
-        """
         text_content = []
         for shape in slide.shapes:
             if not shape.has_text_frame:
@@ -116,15 +79,6 @@ class PPTXExtractor:
         return "\n".join(text_content)
 
     def extract_charts(self, slide):
-        """
-        Extracts chart details from the given slide.
-
-        Parameters:
-        - slide: PowerPoint slide object.
-
-        Returns:
-        - list: List of dictionaries containing chart details.
-        """
         chart_details = []
         for shape in slide.shapes:
             if shape.shape_type == MSO_SHAPE_TYPE.CHART:
@@ -139,15 +93,6 @@ class PPTXExtractor:
         return chart_details if chart_details else 'No Chart'
 
     def extract_chart_data(self, chart) -> pd.DataFrame:
-        """
-        Extracts data from the embedded Excel workbook of the given chart.
-
-        Parameters:
-        - chart: Chart object.
-
-        Returns:
-        - pd.DataFrame or str: DataFrame containing chart data or 'No Data' if no data is found.
-        """
         if chart.part.chart_workbook:
             try:
                 xlsx_blob = chart.part.chart_workbook.xlsx_part.blob
@@ -159,15 +104,6 @@ class PPTXExtractor:
         return 'No Data'
 
     def extract_tables(self, slide):
-        """
-        Extracts table details from the given slide.
-
-        Parameters:
-        - slide: PowerPoint slide object.
-
-        Returns:
-        - list: List of DataFrames containing table details.
-        """
         table_details = []
         for shape in slide.shapes:
             if shape.shape_type == MSO_SHAPE_TYPE.TABLE:
@@ -177,10 +113,3 @@ class PPTXExtractor:
                 df = pd.DataFrame(table_data)
                 table_details.append(df)
         return table_details if table_details else 'No Table'
-
-    
-
-# # Example usage:
-# pptx_path = "/content/drive/MyDrive/ppts/DTC_Trends.pptx"
-# extractor_fixed = PPTXExtractorFixed(pptx_path)
-# slide_contents_fixed = extractor_fixed.get_slide_content()

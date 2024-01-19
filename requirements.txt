@@ -16,3 +16,4 @@ pyarrow
 pymilvus==2.3.4
 python-dotenv
 openpyxl
+numpy==1.23.5

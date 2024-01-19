@@ -9,7 +9,7 @@ from langchain.prompts import PromptTemplate
 import numpy as np
 from llama_index.embeddings import OpenAIEmbedding, HuggingFaceEmbedding
 
-chartTypeGlossary = json.load(open(os.path.join(os.getcwd(),'mavericks/config/glossary.json')))
+chartTypeGlossary = json.load(open(os.path.join(os.getcwd(),'pptTools/config/glossary.json')))
 
 # Map
 map_prompt_template = """The following is a set of documents
@@ -63,16 +63,6 @@ Context: {context_str}
 Instruction: Use the previous chat history, or the context above, to interact and help the user.
 Please provide output in markdown format."""
 
-def get_embedding_model(model_name, embed_batch_size=100):
-    if model_name == "text-embedding-ada-002":
-            return OpenAIEmbedding(
-                model=model_name,
-                embed_batch_size=embed_batch_size,
-                api_key=os.environ["OPENAI_API_KEY"])
-    else:
-        return HuggingFaceEmbedding(
-            model_name=model_name,
-            embed_batch_size=embed_batch_size)
 
 def get_splitted_docs(docs, chunk_size=4024, chubk_overlap=0):
     """
@@ -88,39 +78,3 @@ def get_splitted_docs(docs, chunk_size=4024, chubk_overlap=0):
         chunk_size=chunk_size, chunk_overlap=chubk_overlap
     )
     return text_splitter.split_documents(docs)
-
-
-
-# def extract_image_content(shape):
-#         """
-#         [NOT ADDED in MODULE]
-#         Extracts table data from the given image shape using OCR.
-
-#         Parameters:
-#         - shape: Image shape object.
-
-#         Returns:
-#         - list: List containing DataFrames with image content data.
-#         """
-#         image_content_data = []
-#         try:
-#             image_stream = io.BytesIO(shape.image.blob)
-#             image = Image.open(image_stream)
-#             image.convert('L').save("temp.jpg")
-
-#             tab_image = img(src="temp.jpg")
-#             data = tab_image.extract_tables(ocr=TesseractOCR(
-#                 lang="eng"), borderless_tables=True, min_confidence=0)
-#             if len(data) == 0:
-#                 data = tab_image.extract_tables(
-#                     ocr=TesseractOCR(lang="eng"), min_confidence=0)
-#             if len(data) > 0:
-#                 data = pd.concat([i.df for i in data], axis=1)
-#             else:
-#                 data = None
-#             os.remove("temp.jpg")
-#         except Exception as e:
-#             data = None
-#             print(traceback.format_exc())
-#         image_content_data.append(data)
-#         return image_content_data

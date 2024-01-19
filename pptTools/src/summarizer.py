@@ -12,8 +12,8 @@ from langchain.tools import Tool
 from langchain import LLMChain, OpenAI, PromptTemplate
 from langchain.agents import initialize_agent, AgentType
 
-from mavericks.common.utils import get_splitted_docs, map_prompt_template, reduce_prompt_template, summarize_prompt_templates
-from mavericks.src.extractor import PPTXExtractor
+from pptTools.common.utils import get_splitted_docs, map_prompt_template, reduce_prompt_template, summarize_prompt_templates
+from pptTools.src.extractor import PPTXExtractor
 
 from requests import ConnectionError
 from openai import APIConnectionError
@@ -132,9 +132,9 @@ class SummarizerAgent(PPTXExtractor):
 
     def init(self):
         """
-        Initiates the Maverick Summarizer, performs extraction, preprocessing, and logs completion.
+        Initiates the Summarizer, performs extraction, preprocessing, and logs completion.
         """
-        logging.info("Maverick Summarizer in action....")
+        logging.info("PPT Summarizer in action....")
         self.extractor()
         logging.info("Extraction Completed!!")
         self.preprocessor()

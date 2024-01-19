@@ -2,7 +2,7 @@
 # # import configparser
 
 # # cfp = configparser.RawConfigParser()
-# # cfp.read('mavericks\config\creds.ini')
+# # cfp.read('pptTools\config\creds.ini')
 # # milvus_uri = cfp.get('milvus', 'uri')
 # # password = cfp.get('milvus', 'password')
 # # token = cfp.get('milvus', 'token')

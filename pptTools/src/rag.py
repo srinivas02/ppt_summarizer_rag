@@ -1,9 +1,9 @@
 import os
 import sqlite3
 from datetime import datetime
-from mavericks.src import *
-from mavericks.src.extractor import PPTXExtractor
-from mavericks.common.utils import qa_prompt, get_embedding_model, chat_context_prompt
+from pptTools.src import *
+from pptTools.src.extractor import PPTXExtractor
+from pptTools.common.utils import qa_prompt, chat_context_prompt
 from llama_index.vector_stores import MilvusVectorStore
 from llama_index import ServiceContext, StorageContext, LLMPredictor
 from llama_index.indices.vector_store import VectorStoreIndex
@@ -19,8 +19,9 @@ from llama_index.prompts import LangchainPromptTemplate
 from llama_index.schema import Document
 from llama_index.memory import ChatMemoryBuffer
 
-class MaverickRagAgent(PPTXExtractor):
-    """MaverickRagAgent extracts information from PPTX files and provides querying capabilities.
+
+class RagAgent(PPTXExtractor):
+    """RagAgent extracts information from PPTX files and provides querying capabilities.
 
     Args:
         filepath (str): The path to the PPTX file.
@@ -38,7 +39,7 @@ class MaverickRagAgent(PPTXExtractor):
         super().__init__(filepath)
         self.filepath = filepath
         self.documents = [Document.from_langchain_format(doc) for doc in self.get_slide_content()]
-        db_filename = 'maverick.db'
+        db_filename = 'local_storage.db'
         self.conn = sqlite3.connect(db_filename)
         self.cur = self.conn.cursor()
         self.collection_name = self.embedding_model_name = None
@@ -76,7 +77,7 @@ class MaverickRagAgent(PPTXExtractor):
         return exists == 1
 
     def ignite(self, embedding_model_name, top_k=5, collection_name="team1", streaming=True, chat_mode = False):
-        """Initialize the MaverickRagAgent with the specified parameters.
+        """Initialize the RagAgent with the specified parameters.
 
         Args:
             embedding_model_name (str): Name of the embedding model.
@@ -89,13 +90,12 @@ class MaverickRagAgent(PPTXExtractor):
         self.collection_name = collection_name
         self.streaming = streaming
         self.chat_mode = chat_mode
-        mv_store = MilvusVectorStore(uri=os.environ["MILVUS_URI"], token=os.environ["MILVUS_TOKEN"], dim=1536, collection_name=collection_name)
+        
 
         lc_prompt_tmpl = LangchainPromptTemplate(
             template=qa_prompt,
             template_var_mappings={"query_str": "question", "context_str": "context"},
-        )
-        embed_model = get_embedding_model(embedding_model_name)
+        )  
         text_splitter = TokenTextSplitter(
             separator=" ",
             chunk_size=1024,
@@ -112,14 +112,14 @@ class MaverickRagAgent(PPTXExtractor):
 
         service_context = ServiceContext.from_defaults(
             llm=OpenAI(temperature=0, model=os.environ["OPENAI_MODEL_NAME"], max_tokens=2048),
-            embed_model=embed_model,
+            embed_model=embedding_model_name,
             node_parser=text_splitter,
             prompt_helper=prompt_helper
         )
-        storage_context = StorageContext.from_defaults(vector_store=mv_store)
+        storage_context = StorageContext.from_defaults(vector_store=vector_store)
         if self.check_documents_present():
             index = VectorStoreIndex.from_vector_store(
-                mv_store, storage_context=storage_context, service_context=service_context
+                vector_store, storage_context=storage_context, service_context=service_context
             )
         else:
             index = VectorStoreIndex.from_documents(
